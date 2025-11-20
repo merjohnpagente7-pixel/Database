@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+        }
+
+        .stat-card.total { border-color: #3b82f6; }
+        .stat-card.today { border-color: #10b981; }
+        .stat-card.upcoming { border-color: #8b5cf6; }
+
+        .stat-card h3 {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-card p {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .main-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        input[type="date"] {
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            padding: 8px 12px;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+            padding: 8px 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f9fafb;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-header h2 {
+            color: #1f2937;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            animation: slideIn 0.3s;
+        }
+
+        .notification.success {
+            background: #10b981;
+        }
+
+        .notification.error {
+            background: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state svg {
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍽️ Reservation Management</h1>
+            <p>Manage your restaurant reservations efficiently</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card total">
+                <h3>Total Reservations</h3>
+                <p id="totalReservations">0</p>
+            </div>
+            <div class="stat-card today">
+                <h3>Today's Reservations</h3>
+                <p id="todayReservations">0</p>
+            </div>
+            <div class="stat-card upcoming">
+                <h3>Upcoming</h3>
+                <p id="upcomingReservations">0</p>
+            </div>
+        </div>
+
+        <div class="main-panel">
+            <div class="controls">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search by name or contact...">
+                </div>
+                <input type="date" id="dateFilter">
+                <button class="btn btn-primary" onclick="openModal()">+ New Reservation</button>
+            </div>
+
+            <div id="tableContainer">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Contact</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Guests</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reservationTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">New Reservation</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label>Customer Name *</label>
+                <input type="text" id="customerName" required>
+            </div>
+            <div class="form-group">
+                <label>Contact Number *</label>
+                <input type="tel" id="contact" required>
+            </div>
+            <div class="form-group">
+                <label>Reservation Date *</label>
+                <input type="date" id="reservationDate" required>
+            </div>
+            <div class="form-group">
+                <label>Reservation Time *</label>
+                <input type="time" id="reservationTime" required>
+            </div>
+            <div class="form-group">
+                <label>Number of Guests *</label>
+                <input type="number" id="guests" min="1" required>
+            </div>
+            <div class="form-group">
+                <label>Notes (Optional)</label>
+                <textarea id="notes"></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-success" onclick="saveReservation()">Save Reservation</button>
+                <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let reservations = [];
+        let editingId = null;
+
+        function init() {
+            loadReservations();
+            document.getElementById('searchInput').addEventListener('input', filterReservations);
+            document.getElementById('dateFilter').addEventListener('change', filterReservations);
+        }
+
+        function loadReservations() {
+            const saved = localStorage.getItem('reservations');
+            reservations = saved ? JSON.parse(saved) : [];
+            updateStats();
+            filterReservations();
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('reservations', JSON.stringify(reservations));
+        }
+
+        function updateStats() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('totalReservations').textContent = reservations.length;
+            document.getElementById('todayReservations').textContent = 
+                reservations.filter(r => r.reservationDate === today).length;
+            document.getElementById('upcomingReservations').textContent = 
+                reservations.filter(r => new Date(r.reservationDate) > new Date()).length;
+        }
+
+        function filterReservations() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const date = document.getElementById('dateFilter').value;
+
+            const filtered = reservations.filter(r => {
+                const matchSearch = r.customerName.toLowerCase().includes(search) || 
+                                  r.contact.includes(search);
+                const matchDate = !date || r.reservationDate === date;
+                return matchSearch && matchDate;
+            });
+
+            renderTable(filtered);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('reservationTable');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <div>No reservations found</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = data.map(r => `
+                <tr>
+                    <td><strong>${r.customerName}</strong></td>
+                    <td>${r.contact}</td>
+                    <td>${r.reservationDate}</td>
+                    <td>${r.reservationTime}</td>
+                    <td>${r.guests}</td>
+                    <td>${r.notes || '-'}</td>
+                    <td class="actions">
+                        <button class="btn btn-edit" onclick="editReservation('${r.id}')">✏️</button>
+                        <button class="btn btn-danger" onclick="deleteReservation('${r.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'New Reservation';
+            clearForm();
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            clearForm();
+        }
+
+        function clearForm() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('contact').value = '';
+            document.getElementById('reservationDate').value = '';
+            document.getElementById('reservationTime').value = '';
+            document.getElementById('guests').value = '';
+            document.getElementById('notes').value = '';
+        }
+
+        function saveReservation() {
+            const customerName = document.getElementById('customerName').value.trim();
+            const contact = document.getElementById('contact').value.trim();
+            const reservationDate = document.getElementById('reservationDate').value;
+            const reservationTime = document.getElementById('reservationTime').value;
+            const guests = document.getElementById('guests').value;
+            const notes = document.getElementById('notes').value.trim();
+
+            if (!customerName || !contact || !reservationDate || !reservationTime || !guests) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            if (!/^\d{10,}$/.test(contact.replace(/[-\s]/g, ''))) {
+                showNotification('Please enter a valid contact number', 'error');
+                return;
+            }
+
+            if (editingId) {
+                const index = reservations.findIndex(r => r.id === editingId);
+                reservations[index] = {
+                    ...reservations[index],
+                    customerName,
+                    contact,
+                    reservationDate,
+                    reservationTime,
+                    guests: parseInt(guests),
+                    notes
+                };
+                showNotification('Reservation updated successfully!', 'success');
+            } else {
+                reservations.push({
+                    id: Date.now().toString(),
+                    customerName,
+                    contact,
+                    reservationDate,
+                    reservationTime,
+                    guests: parseInt(guests),
+                    notes
+                });
+                showNotification('Reservation created successfully!', 'success');
+            }
+
+            saveToStorage();
+            updateStats();
+            filterReservations();
+            closeModal();
+        }
+
+        function editReservation(id) {
+            const reservation = reservations.find(r => r.id === id);
+            if (!reservation) return;
+
+            editingId = id;
+            document.getElementById('modalTitle').textContent = 'Edit Reservation';
+            document.getElementById('customerName').value = reservation.customerName;
+            document.getElementById('contact').value = reservation.contact;
+            document.getElementById('reservationDate').value = reservation.reservationDate;
+            document.getElementById('reservationTime').value = reservation.reservationTime;
+            document.getElementById('guests').value = reservation.guests;
+            document.getElementById('notes').value = reservation.notes || '';
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function deleteReservation(id) {
+            if (confirm('Are you sure you want to delete this reservation?')) {
+                reservations = reservations.filter(r => r.id !== id);
+                saveToStorage();
+                updateStats();
+                filterReservations();
+                showNotification('Reservation deleted successfully!', 'success');
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
